@@ -12,9 +12,9 @@ library(here)
 
 ## R Markdown
 
-Morphometrics refers to all aspects of brook trout morphology that were measured. 
-* Weight
-* Length
+Morphometrics refers to all aspects of brook trout morphology that were measured.   
+* Weight. 
+* Length. 
 
 It also refers to calculated metrics, such as:   
 * SGR (specific growth rate). 
