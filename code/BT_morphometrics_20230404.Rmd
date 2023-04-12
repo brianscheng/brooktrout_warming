@@ -8,19 +8,72 @@ output: word_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(here)
+library(tidyverse)
 ```
 
 ## R Markdown
 
 Morphometrics refers to all aspects of brook trout morphology that were measured.   
-* Weight. 
-* Length. 
+* Weight  
+* Length 
+* Sex (for fish that were sampled)   
 
 It also refers to calculated metrics, such as:   
-* SGR (specific growth rate). 
-* Condition factor 
+* SGR (specific growth rate)  
+* Condition factor (K)  
+* TGC (thermal growth coefficient)   
 
-```{r import}
-dat <- read.csv(here('data/BT_Morphometrics_Calculations_Merged_04042023.csv'))
+With long format data
+
+```{r}
+morph_long<-read.csv(here('data/BT_Morphometrics_LongForm_Merged_04042023.csv'), stringsAsFactors = T)
+str(morph_long)
+
+morph_long <- morph_long %>%
+  mutate (TANK_Real = factor(TANK_Real)) %>%
+  mutate (rdate = as.POSIXct(x=TIME, format = "%Y-%m-%d")) %>%
+  mutate (K = WEIGHT*100*(LENGTH^-3)) %>%
+  rename ("tank" = "TANK_Real") %>%
+  rename ("time_step" = "condition3")
+str(morph_long)
+#unique(morph_long$TIME)
+#K = Mass*(Length^-3)
+morph_long_inital<-morph_long %>% filter (time_step =="T1")
+```
+Data Tidying
+```{r}
+sum(is.na(morph_long$WEIGHT)) #676 Weight NAs
+sum(is.na(morph_long$LENGTH)) #678 Length NAs
+morph_long2<-morph_long %>%
+  drop_na(WEIGHT) %>%
+  drop_na(LENGTH)
+summary(morph_long2) #now has 2100 obs
+freq_tab<-morph_long2 %>%
+  count(tank, time_step) %>%
+  group_by(tank)
+ggplot(data=freq_tab, aes(x=time_step,y=n, group = tank, color = tank))+geom_line()
 ```
 
+
+EDA
+
+```{r}
+ggplot(data = morph_long, aes(x=rdate, y=WEIGHT, color = TANK_Real))+geom_point()
+
+
+morph_long %>%
+  count(TANK_Real, condition3) %>%
+  group_by(TANK_Real)
+```
+
+Are there differences in initial size?
+
+```{r}
+ggplot(data = morph_long_inital, aes(x=TANK_Real, y=WEIGHT))+geom_boxplot()
+ggplot(data = morph_long_inital, aes(x=TANK_Real, y=LENGTH))+geom_boxplot()
+init_w<-glm(data=morph_long_inital, formula = WEIGHT ~ TANK_Real, family = gaussian())
+init_l<-glm(data=morph_long_inital, formula = LENGTH ~ TANK_Real, family = gaussian())
+summary(init_w)
+summary(init_l)
+```
+No evidence for differences across tank treatments with respect to initial WEIGHT or LENGTH. 
