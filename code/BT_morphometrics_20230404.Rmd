@@ -9,6 +9,9 @@ output: word_document
 knitr::opts_chunk$set(echo = TRUE)
 library(here)
 library(tidyverse)
+library(lme4)
+library(lmerTest)
+library(emmeans)
 ```
 
 ## R Markdown
@@ -30,11 +33,13 @@ morph_long<-read.csv(here('data/BT_Morphometrics_LongForm_Merged_04042023.csv'),
 str(morph_long)
 
 morph_long <- morph_long %>%
+  mutate (temp = factor(substr(TANK_Real, 1, 2)))%>%
   mutate (TANK_Real = factor(TANK_Real)) %>%
   mutate (rdate = as.POSIXct(x=TIME, format = "%Y-%m-%d")) %>%
   mutate (K = WEIGHT*100*(LENGTH^-3)) %>%
   rename ("tank" = "TANK_Real") %>%
   rename ("time_step" = "condition3")
+  
 str(morph_long)
 #unique(morph_long$TIME)
 #K = Mass*(Length^-3)
@@ -51,7 +56,15 @@ summary(morph_long2) #now has 2100 obs
 freq_tab<-morph_long2 %>%
   count(tank, time_step) %>%
   group_by(tank)
+freq_tab
 ggplot(data=freq_tab, aes(x=time_step,y=n, group = tank, color = tank))+geom_line()
+
+#create summary df
+bt_means<-tapply(morph_long2$WEIGHT, list(morph_long2$tank,morph_long2$time_step),mean)
+bt_sd   <-tapply(morph_long2$WEIGHT, list(morph_long2$tank,morph_long2$time_step),sd)
+bt_count<-tapply(morph_long2$WEIGHT, list(morph_long2$tank,morph_long2$time_step),length)
+bt_sem  <-bt_means/sqrt(bt_count)
+weight_means<-data.frame(rbind(bt_means,bt_sem))
 ```
 
 
@@ -69,6 +82,7 @@ morph_long %>%
 Are there differences in initial size?
 
 ```{r}
+str(morph_long2)
 ggplot(data = morph_long_inital, aes(x=TANK_Real, y=WEIGHT))+geom_boxplot()
 ggplot(data = morph_long_inital, aes(x=TANK_Real, y=LENGTH))+geom_boxplot()
 init_w<-glm(data=morph_long_inital, formula = WEIGHT ~ TANK_Real, family = gaussian())
@@ -77,3 +91,21 @@ summary(init_w)
 summary(init_l)
 ```
 No evidence for differences across tank treatments with respect to initial WEIGHT or LENGTH. 
+
+How about differences in length and weight over time?
+
+```{r}
+str(morph_long2)
+ggplot(data = morph_long2, aes(x=time_step, y=WEIGHT, color = tank))+geom_boxplot()
+ggplot(data = morph_long2, aes(x=time_step, y=LENGTH, color = tank))+geom_boxplot()
+
+```
+
+Definitely differences across temps. Slight tank effects
+
+```{r}
+length01<-lmer(LENGTH ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
+summary(length01)
+difflsmeans(length01, test.effs = "Temp", ddf = "Kenward-Roger")
+```
+
