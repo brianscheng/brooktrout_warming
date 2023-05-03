@@ -58,22 +58,39 @@ freq_tab<-morph_long2 %>%
   group_by(tank)
 freq_tab
 ggplot(data=freq_tab, aes(x=time_step,y=n, group = tank, color = tank))+geom_line()
+```
 
-#create summary df
-bt_means<-tapply(morph_long2$WEIGHT, list(morph_long2$tank,morph_long2$time_step),mean)
-bt_sd   <-tapply(morph_long2$WEIGHT, list(morph_long2$tank,morph_long2$time_step),sd)
-bt_count<-tapply(morph_long2$WEIGHT, list(morph_long2$tank,morph_long2$time_step),length)
-bt_sem  <-bt_means/sqrt(bt_count)
-weight_means<-data.frame(rbind(bt_means,bt_sem))
+Calculate
+```{r}
+#create summary df for weight mean and sem
+bt_means2<-tapply(morph_long2$WEIGHT,list(morph_long2$temp,morph_long2$time_step),mean)
+bt_sd2   <-tapply(morph_long2$WEIGHT,list(morph_long2$temp,morph_long2$time_step),sd)
+bt_count2<-tapply(morph_long2$WEIGHT,list(morph_long2$temp,morph_long2$time_step),length)
+bt_sem2  <-bt_means2/sqrt(bt_count2)
+
+weight_means<-data.frame(bt_means2)
+weight_means$C_temp<-row.names(weight_means)
+weight_means2<-weight_means %>%
+  pivot_longer(cols = starts_with("T"),
+               names_to = "time_step",
+               names_prefix = "T",
+               values_to = "mean_weight")
+
+weight_se<-data.frame(bt_sem2)
+weight_se$C_temp<-row.names(weight_se)
+weight_se2<-weight_se %>%
+  pivot_longer(cols = starts_with("T"),
+               names_to = "time_step",
+               names_prefix = "T",
+               values_to = "se_weight")
+#now merge the dataframes
+weight_mean_se<- left_join(weight_means2, weight_se2, by = c("time_step", "C_temp"))
 ```
 
 
 EDA
 
 ```{r}
-ggplot(data = morph_long, aes(x=rdate, y=WEIGHT, color = TANK_Real))+geom_point()
-
-
 morph_long %>%
   count(TANK_Real, condition3) %>%
   group_by(TANK_Real)
@@ -95,17 +112,71 @@ No evidence for differences across tank treatments with respect to initial WEIGH
 How about differences in length and weight over time?
 
 ```{r}
-str(morph_long2)
-ggplot(data = morph_long2, aes(x=time_step, y=WEIGHT, color = tank))+geom_boxplot()
-ggplot(data = morph_long2, aes(x=time_step, y=LENGTH, color = tank))+geom_boxplot()
-
+A_col <- "#9933FF"
+B_col <- "#FF6666"
+str(weight_mean_se)
+plot1<-ggplot(weight_mean_se, aes(x=time_step, y=mean_weight, color = C_temp))+geom_point()+
+  geom_errorbar(data=weight_mean_se, aes(ymin=mean_weight-se_weight, ymax = mean_weight+se_weight),
+                width=0, size = 1)+
+  geom_point(size = 3, fill = "white")+
+  labs(y=expression(paste("Weight (mean grams \U00B1SEM)")), x="Time Step")+
+  theme_bw()+theme(legend.title=element_text(size=16),legend.text=element_text(size=14),
+        axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
+        axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
+        panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+  scale_fill_manual(values  = c(A_col, B_col)) +
+  scale_color_manual(values = c(A_col, B_col))
+plot
+ppi=300
+png("figures/mass_time_series.png", width=9*ppi, height=6*ppi, res=ppi)
+plot1
+dev.off()
 ```
 
 Definitely differences across temps. Slight tank effects
 
 ```{r}
 length01<-lmer(LENGTH ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
+length02<-lmer(LENGTH ~ temp * time_step + (1|TAGNUMBER) + (1|tank), data = morph_long2)
+
 summary(length01)
-difflsmeans(length01, test.effs = "Temp", ddf = "Kenward-Roger")
+summary(length02)
+
+anova(length01, ddf = "Kenward-Roger")
+anova(length02, ddf = "Kenward-Roger")
+
+emm1 = emmeans (length01, ~ temp | time_step)
+contrast(emm1, contrast = TRUE)
+pairs(emm1)
+pairs(emm1, by = "temp")
+plot(emm1)
+```
+Most sensible model for length is fixed effects of temperature, time steps, and their interaction. It is possible to model with a crossed random effect of tank (since there are 4) but this would only really make sense if random tanks were nested within temperature, which overfits the data. So I think random effects of repeated measures on individuals makes the most sense. 
+
+```{r}
+morph_long2$resid<-resid(length01)
+str(morph_long2)
+ggplot(morph_long2, aes(x=tank, y = resid))+geom_boxplot()+geom_point()
+ggplot(morph_long2, aes(x=time_step, y = resid))+geom_boxplot()+geom_point()
+ggplot(morph_long2, aes(x=time_step, y = resid))+geom_boxplot()+geom_point()+facet_grid(.~tank)
+
+```
+Residuals for length model looks good. Now moving on to weight. 
+
+```{r}
+weight01<-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
+weight02<-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER) + (1|tank), data = morph_long2)
+
+summary(weight01)
+summary(weight02)
+
+anova(length01, ddf = "Kenward-Roger")
+anova(length02, ddf = "Kenward-Roger")
+
+emm2 = emmeans (weight01, ~ temp | time_step)
+contrast(emm2, contrast = TRUE)
+pairs(emm2)
+pairs(emm2, by = "temp")
+plot(emm2)
 ```
 
