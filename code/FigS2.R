@@ -65,6 +65,7 @@ figS2a<-ggplot(data = data2, aes(x= log10_Weight, y = log10(Total_filament_lengt
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                    legend.position = c(0.8,0.2))+
+  coord_cartesian(ylim = c(2.5,4.0))+
   labs(y=expression(paste("Total filament length (log"[10]," mm)")), 
                   x=expression(paste("Body mass (log"[10]," g)"))) +
   scale_fill_manual(values  = c(A_col, B_col))+
@@ -82,6 +83,7 @@ figS2b<-ggplot(data = data2, aes(x= log10_Weight, y = log10(Lamellar_frequency),
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                    legend.position = 'none')+
+  coord_cartesian(ylim = c(0.75,2.25))+
   labs(y=expression(paste("Lamellar frequency (log"[10]," ", "count"," ", mm^-2,")")), 
        x=expression(paste("Body mass (log"[10]," g)"))) +
   scale_fill_manual(values  = c(A_col, B_col))+
@@ -99,6 +101,7 @@ figS2c<-ggplot(data = data2, aes(x= log10_Weight, y = log10(Lamellar_area), colo
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                    legend.position = 'none')+
+  coord_cartesian(ylim = c(-2,-0.5))+
   labs(y=expression(paste("Lamellar area (log"[10]," ", mm^2,")")), 
        x=expression(paste("Body mass (log"[10]," g)"))) +
   scale_fill_manual(values  = c(A_col, B_col))+
