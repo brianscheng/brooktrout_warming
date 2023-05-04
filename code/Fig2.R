@@ -16,8 +16,10 @@ morph_long <- morph_long %>%
   mutate (TANK_Real = factor(TANK_Real)) %>%
   mutate (rdate = as.POSIXct(x=TIME, format = "%Y-%m-%d")) %>%
   mutate (K = WEIGHT*100*(LENGTH^-3)) %>%
+  mutate (Days_in_Exp2 = factor(Days_in_Exp)) %>%
   rename ("tank" = "TANK_Real") %>%
-  rename ("time_step" = "condition3")
+  rename ("time_step" = "condition3") %>%
+  filter (time_step !="T7")
 
 str(morph_long)
 #unique(morph_long$TIME)
@@ -36,6 +38,7 @@ freq_tab<-morph_long2 %>%
   group_by(tank)
 freq_tab
 ggplot(data=freq_tab, aes(x=time_step,y=n, group = tank, color = tank))+geom_line()
+ggplot(data=morph_long2, aes (x=time_step, y=Days_in_Exp))+geom_point()
 
 #### summarize means
 bt_means2<-tapply(morph_long2$WEIGHT,list(morph_long2$temp,morph_long2$time_step),mean)
@@ -60,6 +63,15 @@ weight_se2<-weight_se %>%
                values_to = "se_weight")
 #now merge the dataframes
 weight_mean_se<- left_join(weight_means2, weight_se2, by = c("time_step", "C_temp"))
+weight_mean_se<- weight_mean_se %>%
+  mutate (time_step = factor(time_step))%>%
+  mutate (Days = case_when (time_step == "1"~ 0,
+                            time_step == "2"~ 20,
+                            time_step == "3"~ 62,
+                            time_step == "4"~ 98,
+                            time_step == "5"~ 133,
+                            time_step == "6"~ 161,
+                            time_step == "8"~ 244))
 
 #### differences in initial size?
 str(morph_long2)
@@ -74,16 +86,17 @@ summary(init_l)
 A_col <- "#9933FF"
 B_col <- "#FF6666"
 str(weight_mean_se)
-plot1<-ggplot(weight_mean_se, aes(x=time_step, y=mean_weight, color = C_temp,group = C_temp))+
-  geom_point(size = 3, position = position_dodge(width = 0.2))+
+plot1<-ggplot(weight_mean_se, aes(x=Days, y=mean_weight, color = C_temp,group = C_temp))+
+  geom_point(size = 3.5, position = position_dodge(width = 0.2))+
   geom_errorbar(data=weight_mean_se, aes(ymin=mean_weight-se_weight, ymax = mean_weight+se_weight),
                 width=0, size = 1, position = position_dodge(width = 0.2))+
   geom_line(aes(group = C_temp), position = position_dodge(width = 0.2))+
-  labs(y=expression(paste("Weight (mean grams \U00B1SEM)")), x="Time Step")+
+  labs(y=expression(paste("Body mass (mean grams \U00B1SEM)")), x="Days in experiment")+
   theme_bw()+theme(legend.title=element_text(size=16),legend.text=element_text(size=14),
                    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
-                   panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
+                   panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                   legend.position = c(0.1,0.85))+
   scale_fill_manual(values  = c(A_col, B_col)) +
   scale_color_manual(values = c("15" = A_col, "20" = B_col))
 plot1
@@ -91,3 +104,5 @@ ppi=300
 png('figures/mass_time_series.png', width=9*ppi, height=6*ppi, res=ppi)
 plot1
 dev.off()
+
+
