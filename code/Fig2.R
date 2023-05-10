@@ -6,10 +6,13 @@ library(lme4)
 library(lmerTest)
 library(emmeans)
 library(car)
+library(glmmTMB)
 
 #### read data
 morph_long<-read.csv(here('data/BT_Morphometrics_LongForm_Merged_05032023.csv'), stringsAsFactors = T)
 str(morph_long)
+which(morph_long$WEIGHT == 0) #erroneous data point
+
 
 morph_long <- morph_long %>%
   mutate (temp = factor(substr(TANK_Real, 1, 2)))%>%
@@ -19,7 +22,8 @@ morph_long <- morph_long %>%
   mutate (Days_in_Exp2 = factor(Days_in_Exp)) %>%
   rename ("tank" = "TANK_Real") %>%
   rename ("time_step" = "condition3") %>%
-  filter (time_step !="T7")
+  filter (time_step !="T7") %>%
+  filter (WEIGHT != 0)
 
 str(morph_long)
 #unique(morph_long$TIME)
@@ -91,7 +95,7 @@ plot1<-ggplot(weight_mean_se, aes(x=Days, y=mean_weight, color = C_temp,group = 
   geom_errorbar(data=weight_mean_se, aes(ymin=mean_weight-se_weight, ymax = mean_weight+se_weight),
                 width=0, size = 1, position = position_dodge(width = 0.2))+
   geom_line(aes(group = C_temp), position = position_dodge(width = 0.2))+
-  labs(y=expression(paste("Body mass (mean grams \U00B1SEM)")), x="Days in experiment")+
+  labs(y=expression(paste("Mass (mean grams \U00B1SEM)")), x="Days in experiment")+
   theme_bw()+theme(legend.title=element_text(size=16),legend.text=element_text(size=14),
                    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
@@ -105,4 +109,55 @@ png('figures/mass_time_series.png', width=9*ppi, height=6*ppi, res=ppi)
 plot1
 dev.off()
 
+####Mass analysis
 
+weight01<-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
+weight02<-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER) + (1|tank), data = morph_long2)
+
+summary(weight01)
+summary(weight02)
+
+plot(weight01)
+morph_long2$residuals<-residuals(weight01)
+ggplot(morph_long2,aes(x=time_step, y= residuals))+geom_boxplot()
+ggplot(morph_long2,aes(x=temp, y= residuals))+geom_boxplot()+facet_grid(.~time_step)
+
+anova(weight01, ddf = "Kenward-Roger")
+anova(weight02, ddf = "Kenward-Roger")
+
+emm2 = emmeans (weight01, ~ temp | time_step)
+contrast(emm2, contrast = TRUE)
+pairs(emm2)
+pairs(emm2, by = "temp")
+plot(emm2)
+
+weight01b<-glmmTMB(WEIGHT ~ temp * time_step + (1|TAGNUMBER), data = morph_long2, family = Gamma)
+summary(weight01b)
+
+
+#### SGR analysis and plotting
+sgr<-read.csv(here('data/BT_Morphometrics_SGR_LongForm_Merged_05032023.csv'), stringsAsFactors = T)
+str(sgr)
+which(sgr$SGR < 0)
+sgr <- sgr %>%
+  mutate (temp = factor(substr(TANK_Real, 1, 2)))%>%
+  mutate (TANK_Real = factor(TANK_Real)) %>%
+  mutate (Days_in_Exp2 = factor(Days_in_Exp)) %>%
+  rename ("tank" = "TANK_Real") %>%
+  rename ("time_step" = "condition3") %>%
+  filter (condition1 !="SGR_6") %>%
+  filter (SGR > -0.2) #remove mass = 0 fish
+
+#### summarize means
+sgr_means <-tapply(sgr$SGR,list(sgr$temp,sgr$time_step),mean)
+sgr_std   <-tapply(sgr$SGR,list(sgr$temp,sgr$time_step),sd)
+sgr_count <-tapply(sgr$SGR,list(sgr$temp,sgr$time_step),length)
+sgr_sem   <-sgr_means/sqrt(sgr_count)
+
+sgr_means<-data.frame(sgr_means)
+sgr_means$C_temp<-row.names(sgr_means)
+sgr_means <-sgr_means %>%
+  pivot_longer(cols = starts_with("T"),
+               names_to = "time_step",
+               names_prefix = "T",
+               values_to = "mean_weight")
