@@ -1,0 +1,175 @@
+---
+title: "Brook Trout Metabolic Rate Analyses"
+author: "Brian Cheng"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(here)
+library(tidyverse)
+library(MuMIn)
+library(bbmle)
+library(lme4)
+library(lmerTest)
+library(formatR)
+library(EnvStats)
+library(knitr)
+```
+
+# Intro and Experimental Overview
+
+This is an RMD for the metabolic rate data for the brooktrout experiment. 
+
+The experiment was comprised of the growout of juvenile brook trout across temperatures (15 and 20C) with two tank replicates at each temperature. We then measured, growth, metabolic rate, and GSA. 
+
+This specific dataset includes a total of X individual fish that were grown at 15 and 20C across 3 time points (0, 3, 6 months). Sample size = X fish per time point/temperature. Replicate refers to the tank that a fish was grown in, labeled as 1 and 2 (for 15C tanks) and 3 and 4 (for 20C tanks).
+
+```{r data}
+data_rmr<-read.csv(here('data/BT_Resp_All_Excel_071022 BSC.csv', stringsAsFactors = T))
+
+str(data_rmr)
+data2_rmr<-data_rmr %>%
+  mutate (Temp = factor(Temp)) %>%
+  mutate (Time = substring(time_month,1,2)) %>%
+  mutate (Time = factor(Time)) %>%
+  mutate (Replicate = case_when (Temp == "15" & Replicate == "1"~ "1",
+                                 Temp == "15" & Replicate == "2"~ "2",
+                                 Temp == "20" & Replicate == "1"~ "3",
+                                 Temp == "20" & Replicate == "2"~ "4")) %>%
+  mutate (Replicate = factor (Replicate)) %>%
+  mutate (log10_Weight = log10(weight_g)) %>%
+  mutate (log10_RMR_ms = log10(RMR_mass_specific)) %>%
+  mutate (log10_RMR_ab = log10(RMR_absolute))
+
+data2_rmr_15C<-subset(data2_rmr, Temp==15)
+data2_rmr_20C<-subset(data2_rmr, Temp==20)
+```
+#RMR Data
+```{r sample size}
+data2_rmr %>%
+  count(Temp, Time,  Replicate)
+```
+Sample size coverage across temp, time, and replicate. Unclear why we had n = 6 at time 6 and temp = 15. 
+
+Create MS plot
+
+```{r}
+A_col <- "#9933FF"
+B_col <- "#FF6666"
+fig3b<-ggplot(data2, aes(x=log10_Weight, y = log10_RMR_ab, color = Temp))+theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = c(0.07,0.9))+
+  #labs(y="test",x="test_X")+
+    labs(y=expression(paste("RMR (log"[10]," absolute)")), x=expression(paste("Body mass (log"[10]," g)"))) +
+  scale_fill_manual(values  = c(A_col, B_col))+
+  scale_color_manual(values = c(A_col, B_col))+
+  stat_smooth(method="lm")+
+  geom_point()
+ppi=300
+png("figures/fig3b.png", width=6*ppi, height=6*ppi, res=ppi)
+fig3b
+dev.off()
+```
+Parameters for plot
+
+
+```{r}
+n0_15  <-lm(log10_RMR_ab~log10_Weight, data = data2_rmr_15C)
+n0_20  <-lm(log10_RMR_ab~log10_Weight, data = data2_rmr_20C)
+summary(n0_15)
+summary(n0_20)
+confint(n0_15)
+confint(n0_20)
+```
+
+n5  <-lm(log10_RMR_ab~log10_Weight*Temp, data = data2)
+summary(n5)
+```
+Temp 15 = RMR = -0.661x^0.841
+Temp 20 = RMR = -0.590x^0.82111
+
+#MMR Data
+
+```{r}
+data_mmr<-read.csv("BT_Resp_All_Excel_071022 BSC MMR.csv", stringsAsFactors = T, header = T)
+str(data_mmr)
+data2_mmr<-data_mmr %>%
+  mutate (Temp = factor(Temp)) %>%
+  mutate (Time = substring(time_month,1,2)) %>%
+  mutate (Time = factor(Time)) %>%
+  mutate (Replicate = case_when (Temp == "15" & Replicate == "1"~ "1",
+                                 Temp == "15" & Replicate == "2"~ "2",
+                                 Temp == "20" & Replicate == "1"~ "3",
+                                 Temp == "20" & Replicate == "2"~ "4")) %>%
+  mutate (Replicate = factor (Replicate)) %>%
+  mutate (log10_Weight = log10(Weight_g)) %>%
+  mutate (log10_MMR_ms = log10(MMR_ms)) %>%
+  mutate (log10_MMR_ab = log10(MMR_ab))
+
+data2_mmr_15C<-subset(data2_mmr, Temp==15)
+data2_mmr_20C<-subset(data2_mmr, Temp==20)
+```
+data in, now plot
+
+```{r}
+fig3c<-ggplot(data2_mmr, aes(x=log10_Weight, y = log10_MMR_ab, color = Temp))+theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        legend.position = c(0.07,0.9))+
+  #labs(y="test",x="test_X")+
+    labs(y=expression(paste("MMR (log"[10]," absolute)")), x=expression(paste("Body mass (log"[10]," g)"))) +
+  scale_fill_manual(values  = c(A_col, B_col))+
+  scale_color_manual(values = c(A_col, B_col))+
+  stat_smooth(method="lm")+
+  geom_point()
+ppi=300
+png("figures/fig3c.png", width=6*ppi, height=6*ppi, res=ppi)
+fig3c
+```
+
+analysis
+
+```{r}
+p0  <-lm(log10_MMR_ab~log10_Weight*Temp, data = data2_mmr)
+summary(p0)
+confint(p0)
+```
+Temp 15 = MMR = -0.147x^0.943
+Temp 20 = MMR = -0.096x^0.882
+
+Now create parameter estimate plot
+
+
+
+```{r MMR}
+p0_15  <-lm(log10_MMR_ab~log10_Weight, data = data2_mmr_15C)
+p0_20  <-lm(log10_MMR_ab~log10_Weight, data = data2_mmr_20C)
+summary(p0_15)
+summary(p0_20)
+confint(p0_15)
+confint(p0_20)
+```
+
+#GSA data
+
+```{r data, echo = FALSE}
+data_gsa<-read.csv("GSA_BT_Compiled_03122023_BSC.csv", stringsAsFactors = T, header = T)
+
+data2_gsa<-data_gsa %>%
+  mutate (Temp = factor(Temp)) %>%
+  mutate (Time = factor(Time)) %>%
+  mutate (Replicate = case_when (Temp == "15" & Replicate == "1"~ "1",
+                                 Temp == "15" & Replicate == "2"~ "2",
+                                 Temp == "20" & Replicate == "1"~ "3",
+                                 Temp == "20" & Replicate == "2"~ "4")) %>%
+  mutate (Replicate = factor (Replicate)) %>%
+  mutate (log10_GSA = log10(GSA)) %>%
+  mutate (log10_Weight = log10(Weight)) %>%
+  mutate (log10_RMR = log10(RMR)) %>%
+  mutate (log10_MMR = log10(MMR))
+
+data2_gsa_15C<-subset(data2_gsa, Temp==15)
+data2_gsa_20C<-subset(data2_gsa, Temp==20)
+```
+
