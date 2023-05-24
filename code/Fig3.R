@@ -1,6 +1,7 @@
 #### Fig 3 - GSA and metabolic rate
 library(here)
-
+library(tidyverse)
+library(scales)
 data<-read.csv(here('data/BT_Resp_Combined_071022_BSC.csv'), stringsAsFactors = T)
 str(data)
 
@@ -18,7 +19,51 @@ data2<-data %>%
 
 str(data2)
 
-ggplot(data=data, aes(x=log10(weight_g), y=log10(MR_absolute), group = Metric, color = Metric))+geom_point()+
-  stat_smooth(method = "lm")+facet_grid(.~Temp)
+A_col <- "#9933FF"
+B_col <- "#FF6666"
+C_col <- "#66FF66"
+fig3<-ggplot(data=data2, aes(x=log10(weight_g), y=log10(Metric_absolute), group = Metric, color = Temp))+
+  stat_smooth(method = "lm")+geom_point(aes(shape = Metric), size = 3)+
+  facet_grid(.~Temp)+theme_bw()+
+  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+        axis.text.y=element_text(size=16),axis.title.y=element_blank(),
+        axis.text.x=element_text(size=16),axis.title.x=element_blank(),
+        strip.background = element_blank(),
+        strip.text.x = element_blank())+
+  scale_fill_manual(values  = c("black","grey","white"))+
+  scale_color_manual(values = c(A_col, B_col, C_col))+
+  scale_shape_manual(values = c(21,22,23))+
+  coord_cartesian(xlim = c(0.5,2.5))+
+  scale_y_continuous (sec.axis = dup_axis())
+fig3
 
+ppi=300
+png("figures/fig3.png", width=9*ppi, height=6*ppi, res=ppi)
+fig3
+dev.off()
 
+#equations
+data2_GSA15 <- data2 %>% filter(Metric == "GSA" & Temp == 15 )
+data2_GSA20 <- data2 %>% filter(Metric == "GSA" & Temp == 20 )
+data2_RMR15 <- data2 %>% filter(Metric == "RMR" & Temp == 15 )
+data2_RMR20 <- data2 %>% filter(Metric == "RMR" & Temp == 20 )
+data2_MMR15 <- data2 %>% filter(Metric == "MMR" & Temp == 15 )
+data2_MMR20 <- data2 %>% filter(Metric == "MMR" & Temp == 20 )
+
+g15<-lm(data=data2_GSA15, log10(Metric_absolute)~log10_Weight)
+g20<-lm(data=data2_GSA20, log10(Metric_absolute)~log10_Weight)
+
+summary(g15)
+summary(g20)
+
+r15<-lm(data=data2_RMR15, log10(Metric_absolute)~log10_Weight)
+r20<-lm(data=data2_RMR20, log10(Metric_absolute)~log10_Weight)
+
+summary(r15)
+summary(r20)
+
+m15<-lm(data=data2_MMR15, log10(Metric_absolute)~log10_Weight)
+m20<-lm(data=data2_MMR20, log10(Metric_absolute)~log10_Weight)
+
+summary(m15)
+summary(m20)
