@@ -1,4 +1,4 @@
-### Script for Figure 2 - weight and SGR time series
+### Script for Figure 2 - mass and SGR time series
 
 library(here)
 library(tidyverse)
@@ -95,14 +95,16 @@ plot1<-ggplot(weight_mean_se, aes(x=Days, y=mean_weight, color = C_temp,group = 
   geom_errorbar(data=weight_mean_se, aes(ymin=mean_weight-se_weight, ymax = mean_weight+se_weight),
                 width=0, size = 1, position = position_dodge(width = 0.2))+
   geom_line(aes(group = C_temp), position = position_dodge(width = 0.2))+
-  labs(y=expression(paste("Mass (mean grams \U00B1SEM)")), x="Days in experiment")+
+  labs(y=expression(paste("Mass (mean \U00B1SEM)")), x="Days in experiment")+
   theme_bw()+theme(legend.title=element_text(size=16),legend.text=element_text(size=14),
                    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                    legend.position = c(0.1,0.85))+
   scale_fill_manual(values  = c(A_col, B_col)) +
-  scale_color_manual(values = c("15" = A_col, "20" = B_col))
+  scale_color_manual(values = c("15" = A_col, "20" = B_col))+
+  coord_cartesian(xlim = c(0,250), ylim = c(-30,250))
+
 plot1
 ppi=300
 png('figures/mass_time_series.png', width=9*ppi, height=6*ppi, res=ppi)
@@ -110,20 +112,27 @@ plot1
 dev.off()
 
 ####Mass analysis
-
-weight01<-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
-weight02<-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER) + (1|tank), data = morph_long2)
+str(morph_long2)
+weight01  <-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
+weight02  <-lmer(WEIGHT ~ temp * time_step + (1|TAGNUMBER) + (1|tank), data = morph_long2)
+weight01a <-lmer(log10(WEIGHT) ~ temp * time_step + (1|TAGNUMBER), data = morph_long2)
 
 summary(weight01)
 summary(weight02)
+summary(weight01a)
 
 plot(weight01)
+plot(weight01a)
 morph_long2$residuals<-residuals(weight01)
+morph_long2$residuals.log<-residuals(weight01a)
 ggplot(morph_long2,aes(x=time_step, y= residuals))+geom_boxplot()
 ggplot(morph_long2,aes(x=temp, y= residuals))+geom_boxplot()+facet_grid(.~time_step)
+ggplot(morph_long2,aes(x=time_step, y= residuals.log))+geom_boxplot()
+ggplot(morph_long2,aes(x=temp, y= residuals.log))+geom_boxplot()+facet_grid(.~time_step)
 
-anova(weight01, ddf = "Kenward-Roger")
-anova(weight02, ddf = "Kenward-Roger")
+anova(weight01,  ddf = "Kenward-Roger")
+anova(weight02,  ddf = "Kenward-Roger")
+anova(weight01a, ddf = "Kenward-Roger")
 
 emm2 = emmeans (weight01, ~ temp | time_step)
 contrast(emm2, contrast = TRUE)
@@ -131,9 +140,22 @@ pairs(emm2)
 pairs(emm2, by = "temp")
 plot(emm2)
 
+emm2a = emmeans (weight01a, ~ temp | time_step)
+contrast(emm2a, contrast = TRUE)
+pairs(emm2a)
+pairs(emm2a, by = "temp")
+plot(emm2a)
+
 weight01b<-glmmTMB(WEIGHT ~ temp * time_step + (1|TAGNUMBER), data = morph_long2, family = Gamma)
 summary(weight01b)
 
+emm2b = emmeans (weight01b, ~ temp | time_step)
+contrast(emm2b, contrast = TRUE)
+pairs(emm2b)
+pairs(emm2b, by = "temp")
+plot(emm2b)
+
+anova(weight01b, ddf = "Kenward-Roger")
 
 #### SGR analysis and plotting
 sgr<-read.csv(here('data/BT_Morphometrics_SGR_LongForm_Merged_05102023.csv'), stringsAsFactors = T)
