@@ -80,27 +80,16 @@ summary(K02)
 summary(K01a)
 
 plot(K01)
+plot(K01a)
+plot(K02)
+
 ConditionFactor_df2$residuals<-residuals(K01)
 ggplot(ConditionFactor_df2,aes(x=time_step, y= residuals))+geom_boxplot()
 ggplot(ConditionFactor_df2,aes(x=temp, y= residuals))+geom_boxplot()+facet_grid(.~time_step)
 
+anova(K01, ddf = "Kenward-Roger")
 
-plot(K01a)
-ConditionFactor_df2$residuals.log<-residuals(K01a)
-ggplot(ConditionFactor_df2,aes(x=time_step, y= residuals.log))+geom_boxplot()
-ggplot(ConditionFactor_df2,aes(x=temp, y= residuals.log))+geom_boxplot()+facet_grid(.~time_step)
-
-anova(K01,  ddf = "Kenward-Roger")
-anova(K02,  ddf = "Kenward-Roger")
-anova(K01a, ddf = "Kenward-Roger")
-
-emm2 = emmeans (K01, ~ temp | time_step)
-contrast(emm2, contrast = TRUE)
-pairs(emm2)
-pairs(emm2, by = "temp")
-plot(emm2)
-
-emm2a = emmeans (K01a, ~ temp | time_step)
+emm2a = emmeans (K01, ~ temp | time_step)
 contrast(emm2a, contrast = TRUE)
 pairs(emm2a)
 pairs(emm2a, by = "temp")
@@ -127,4 +116,4 @@ ggsave("relative_K_07042023.png", width = 6, height = 6, dpi = 600)
 
 # Create CVS of Data
 
-write.csv(ConditionFactor_df2, "ConditionFactor_LongForm_Merged_07042023.csv")
+write.csv(ConditionFactor_df2, "ConditionFactor_LongForm_Merged_07052023.csv")
