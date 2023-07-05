@@ -8,6 +8,9 @@ library(EnvStats)
 library(dunn.test)
 library(multcomp)
 library(car)
+library(lme4)
+library(lmerTest)
+library(emmeans)
 
 RMR_15_Scaling <- 0.872
 RMR_20_Scaling <- 0.830
