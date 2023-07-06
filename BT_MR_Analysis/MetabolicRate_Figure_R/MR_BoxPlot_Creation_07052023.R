@@ -29,9 +29,10 @@ RMR <- read.csv("BT_RMR_LongForm_Merged_06262023.csv")
 
 RMR15 <- subset(RMR, Treatment %in% "15")
 RMR20 <- subset(RMR, Treatment %in% "20")
+RMR_Mass <- rbind(RMR15, RMR20)
 
-RMR15$Mass_Corrected <- (exp(mean(log(RMR15$Mass)))^(RMR_15_Scaling-1))*((RMR15$Mass)^(1-RMR_15_Scaling))*(RMR15$MR.mass)
-RMR20$Mass_Corrected <- (exp(mean(log(RMR20$Mass)))^(RMR_20_Scaling-1))*((RMR20$Mass)^(1-RMR_20_Scaling))*(RMR20$MR.mass)
+RMR15$Mass_Corrected <- (exp(mean(log(RMR_Mass$Mass)))^(RMR_15_Scaling-1))*((RMR15$Mass)^(1-RMR_15_Scaling))*(RMR15$MR.mass)
+RMR20$Mass_Corrected <- (exp(mean(log(RMR_Mass$Mass)))^(RMR_20_Scaling-1))*((RMR20$Mass)^(1-RMR_20_Scaling))*(RMR20$MR.mass)
 
 RMR_MassCorrected <- rbind(RMR15, RMR20)
 
@@ -73,7 +74,7 @@ RMR_MassCorrected <- RMR_MassCorrected %>%
 
 ggplot(RMR_MassCorrected, aes(x = TimePoint, y = Mass_Corrected, fill = Treatment)) +
   geom_boxplot() +
-  labs(x = "Days in Experiment", y = expression("RMR Mass-Corrected (mgO"[2]~"kg"^-1~"hr"^-1~")"), fill = "Treatment") +
+  labs(x = "Days in Experiment", y = expression("Mass Corrected RMR (mgO"[2]~"kg"^-1~"hr"^-1~")"), fill = "Treatment") +
   scale_fill_manual(values = c("15" = A_col, "20" = B_col)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -82,15 +83,17 @@ ggplot(RMR_MassCorrected, aes(x = TimePoint, y = Mass_Corrected, fill = Treatmen
         axis.title.y = element_text(size = 16)) +  
   scale_y_continuous(limits = c(50, 250))
 
-ggsave("rmr_boxplot_063023.png", width = 6, height = 6, dpi = 600)
+ggsave("rmr_boxplot_2_07062023.png", width = 6, height = 6, dpi = 600)
 
 # Mass Correction of MMR
 
 MMR15 <- subset(MMR, Treatment %in% "15")
 MMR20 <- subset(MMR, Treatment %in% "20")
 
-MMR15$Mass_Corrected <- (exp(mean(log(MMR15$Mass)))^(MMR_15_Scaling-1))*((MMR15$Mass)^(1-MMR_15_Scaling))*(MMR15$MMR_1minute)
-MMR20$Mass_Corrected <- (exp(mean(log(MMR20$Mass)))^(MMR_20_Scaling-1))*((MMR20$Mass)^(1-MMR_20_Scaling))*(MMR20$MMR_1minute)
+MMR_Mass <- rbind(MMR15, MMR20)
+
+MMR15$Mass_Corrected <- (exp(mean(log(MMR_Mass$Mass)))^(MMR_15_Scaling-1))*((MMR15$Mass)^(1-MMR_15_Scaling))*(MMR15$MMR_1minute)
+MMR20$Mass_Corrected <- (exp(mean(log(MMR_Mass$Mass)))^(MMR_20_Scaling-1))*((MMR20$Mass)^(1-MMR_20_Scaling))*(MMR20$MMR_1minute)
 
 MMR_MassCorrected <- rbind(MMR15, MMR20)
 
@@ -134,7 +137,7 @@ MMR_MassCorrected <- MMR_MassCorrected %>%
 
 ggplot(MMR_MassCorrected, aes(x = TimePoint, y = Mass_Corrected, fill = Treatment)) +
   geom_boxplot() +
-  labs(x = "Days in Experiment", y = expression("MMR Mass-Corrected (mgO"[2]~"kg"^-1~"hr"^-1~")"), fill = "Treatment") +
+  labs(x = "Days in Experiment", y = expression("Mass Corrected MMR (mgO"[2]~"kg"^-1~"hr"^-1~")"), fill = "Treatment") +
   scale_fill_manual(values = c("15" = A_col, "20" = B_col)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -142,7 +145,7 @@ ggplot(MMR_MassCorrected, aes(x = TimePoint, y = Mass_Corrected, fill = Treatmen
         axis.text = element_text(size = 12), axis.title.x = element_text(size = 16), 
         axis.title.y = element_text(size = 16)) 
 
-ggsave("mmr_boxplot_06302023.png", width = 6, height = 6, dpi = 600)
+ggsave("mmr_boxplot_2_07062023.png", width = 6, height = 6, dpi = 600)
 
 # Calculation of FAS
 
@@ -188,7 +191,7 @@ FAS <- FAS %>%
 
 ggplot(FAS, aes(x = TimePoint, y = FAS, fill = Treatment)) +
   geom_boxplot() +
-  labs(x = "Time Point (months)", y = "FAS", fill = "Treatment") +
+  labs(x = "Time Point (months)", y = "Factorial Aerobic Scope", fill = "Treatment") +
   scale_fill_manual(values = c("15" = A_col, "20" = B_col)) +
   theme_bw() +
   theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -197,10 +200,10 @@ ggplot(FAS, aes(x = TimePoint, y = FAS, fill = Treatment)) +
         axis.title.y = element_text(size = 16)) +  
   scale_y_continuous(limits = c(0, 10))
 
-ggsave("FAS_boxplot_06302023.png", width = 6, height = 6, dpi = 600)
+ggsave("FAS_boxplot_2_07062023.png", width = 6, height = 6, dpi = 600)
 
 # Create CVS of Data
 
-write.csv(RMR_MassCorrected, "RMR_MassCorrected_LongForm_Merged_07052023.csv")
-write.csv(MMR_MassCorrected, "MMR_MassCorrected_LongForm_Merged_07052023.csv")
-write.csv(FAS, "FAS_MassCorrected_LongForm_Merged_07052023.csv")
+write.csv(RMR_MassCorrected, "RMR_MassCorrected_LongForm_Merged_07062023.csv")
+write.csv(MMR_MassCorrected, "MMR_MassCorrected_LongForm_Merged_07062023.csv")
+write.csv(FAS, "FAS_MassCorrected_LongForm_Merged_07062023.csv")
