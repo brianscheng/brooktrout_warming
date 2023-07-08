@@ -6,7 +6,6 @@ library(lme4)
 library(lmerTest)
 library(emmeans)
 library(car)
-library(glmmTMB)
 
 #### read data
 morph_long<-read.csv(here('data/BT_Morphometrics_LongForm_Merged_05032023.csv'), stringsAsFactors = T)
@@ -95,12 +94,12 @@ plot1<-ggplot(weight_mean_se, aes(x=Days, y=mean_weight, color = C_temp,group = 
   geom_errorbar(data=weight_mean_se, aes(ymin=mean_weight-se_weight, ymax = mean_weight+se_weight),
                 width=0, size = 1, position = position_dodge(width = 0.2))+
   geom_line(aes(group = C_temp), position = position_dodge(width = 0.2))+
-  labs(y=expression(paste("Mass (mean \U00B1SEM)")), x="Days in experiment")+
+  labs(y=expression(paste("Mass (mean \U00B1SEM)")), x="Days in Experiment")+
   theme_bw()+theme(legend.title=element_text(size=16),legend.text=element_text(size=14),
                    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
                    panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-                   legend.position = c(0.1,0.85))+
+                   legend.position = c(0.1,0.75))+
   scale_fill_manual(values  = c(A_col, B_col)) +
   scale_color_manual(values = c("15" = A_col, "20" = B_col))+
   coord_cartesian(xlim = c(0,250), ylim = c(-30,250))
@@ -214,7 +213,7 @@ plot2<-ggplot(sgr_mean_se, aes(x=Days, y=mean_sgr, color = C_temp,group = C_temp
   geom_errorbar(data=sgr_mean_se, aes(ymin=mean_sgr-se_sgr, ymax = mean_sgr+se_sgr),
                 width=0, size = 1, position = position_dodge(width = 0.2))+
   geom_line(aes(group = C_temp), position = position_dodge(width = 0.2))+
-  labs(y=expression(paste("Specific Growth Rate (mean \U00B1SEM)")), x="Days in experiment")+
+  labs(y=expression(paste("Specific Growth Rate (mean \U00B1SEM)")), x="Days in Experiment")+
   theme_bw()+theme(legend.title=element_text(size=16),legend.text=element_text(size=14),
                    axis.text.y=element_text(size=16),axis.title.y=element_text(size=18, vjust=1.2),
                    axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),

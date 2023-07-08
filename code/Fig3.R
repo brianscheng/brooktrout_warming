@@ -2,6 +2,7 @@
 library(here)
 library(tidyverse)
 library(scales)
+library(car)
 data<-read.csv(here('data/BT_Resp_Combined_062823_BSC.csv'), stringsAsFactors = T)
 str(data)
 
@@ -43,32 +44,47 @@ fig3
 dev.off()
 
 #equations
+data2_GSA   <- data2 %>% filter(Metric == "GSA")
 data2_GSA15 <- data2 %>% filter(Metric == "GSA" & Temp == 15 )
 data2_GSA20 <- data2 %>% filter(Metric == "GSA" & Temp == 20 )
+
+data2_RMR   <- data2 %>% filter(Metric == "RMR")
 data2_RMR15 <- data2 %>% filter(Metric == "RMR" & Temp == 15 )
 data2_RMR20 <- data2 %>% filter(Metric == "RMR" & Temp == 20 )
+
+data2_MMR   <- data2 %>% filter(Metric == "MMR")
 data2_MMR15 <- data2 %>% filter(Metric == "MMR" & Temp == 15 )
 data2_MMR20 <- data2 %>% filter(Metric == "MMR" & Temp == 20 )
 
+g00<-lm(data=data2_GSA, log10(Metric_absolute)~log10_Weight*Temp)
 g15<-lm(data=data2_GSA15, log10(Metric_absolute)~log10_Weight)
 g20<-lm(data=data2_GSA20, log10(Metric_absolute)~log10_Weight)
 
+summary(g00)
+confint(g00)
+anova(g00)
 summary(g15)
 confint(g15)
 summary(g20)
 confint(g20)
 
+r00<-lm(data=data2_RMR, log10(Metric_absolute)~log10_Weight*Temp)
 r15<-lm(data=data2_RMR15, log10(Metric_absolute)~log10_Weight)
 r20<-lm(data=data2_RMR20, log10(Metric_absolute)~log10_Weight)
 
+summary(r00)
+anova(r00)
 summary(r15)
 confint(r15)
 summary(r20)
 confint(r20)
 
+m00<-lm(data=data2_MMR, log10(Metric_absolute)~log10_Weight*Temp)
 m15<-lm(data=data2_MMR15, log10(Metric_absolute)~log10_Weight)
 m20<-lm(data=data2_MMR20, log10(Metric_absolute)~log10_Weight)
 
+summary(m00)
+anova(m00)
 summary(m15)
 confint(m15)
 summary(m20)

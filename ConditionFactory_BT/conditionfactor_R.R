@@ -13,7 +13,7 @@ library(lmerTest)
 library(emmeans)
 
 
-ConditionFactor_df <- read.csv("BT_Morphometrics_LongForm_Merged_05032023.csv")
+ConditionFactor_df <- read.csv(here("ConditionFactory_BT/BT_Morphometrics_LongForm_Merged_05032023.csv"))
 
 A_col <- "#9933FF"
 B_col <- "#FF6666"

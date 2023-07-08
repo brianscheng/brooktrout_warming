@@ -8,8 +8,9 @@ library(EnvStats)
 library(dunn.test)
 library(multcomp)
 library(car)
-
-Cortisol <- read_excel("GSA_Cortisol_raw_05042023.xlsx")
+library(here)
+library(emmeans)
+Cortisol <- read_excel(here("Cortisol_BT/GSA_Cortisol_raw_05042023.xlsx"))
 
 Cortisol$Date <- as.character(Cortisol$Date)
 
@@ -36,36 +37,44 @@ write.csv(Cortisol, "BT_Cortisol_merged_07042023.csv")
 ## Cortisol Analysis
 
 str(Cortisol)
-Cortisol01  <-lmer(Cortisol ~ Tx * TimePoint + (1|tank), data = Cortisol)
-Cortisol01a <-lmer(log10(Cortisol) ~ Tx * TimePoint + (1|tank), data = Cortisol)
+Cortisol$TimePoint<-factor(Cortisol$TimePoint)
+Cortisol$Tx<-factor(Cortisol$Tx)
 
-summary(Cortisol01)
-summary(Cortisol01a)
+#Cortisol01  <-lmer(Cortisol ~ Tx * TimePoint + (1|tank), data = Cortisol)
+#Cortisol01a <-lmer(log10(Cortisol) ~ Tx * TimePoint + (1|tank), data = Cortisol)
+Cortisol02  <-lm(Cortisol ~ Tx *TimePoint, data = Cortisol)
+Cortisol02a <-lm(log10(Cortisol) ~ Tx *TimePoint, data = Cortisol)
 
-plot(Cortisol01)
-Cortisol$residuals<-residuals(Cortisol01)
+#summary(Cortisol01)
+#summary(Cortisol01a)
+summary(Cortisol02)
+summary(Cortisol02a)
+
+plot(Cortisol02)
+Cortisol$residuals<-residuals(Cortisol02)
 ggplot(Cortisol,aes(x=TimePoint, y= residuals))+geom_boxplot()
 ggplot(Cortisol,aes(x=Tx, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
 
-plot(Cortisol01a)
-Cortisol$residuals<-residuals(Cortisol01a)
-ggplot(Cortisol,aes(x=TimePoint, y= residuals))+geom_boxplot()
-ggplot(Cortisol,aes(x=Tx, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
+Cortisol$residuals02a<-residuals(Cortisol02a)
+ggplot(Cortisol,aes(x=TimePoint, y= residuals02a))+geom_boxplot()
+ggplot(Cortisol,aes(x=Tx, y= residuals02a))+geom_boxplot()+facet_grid(.~TimePoint)
 
-anova(Cortisol01a, ddf = "Kenward-Roger")
+Anova(Cortisol02,  type = 3)
+Anova(Cortisol02a, type = 3)
 
-emm2 = emmeans (Cortisol01a, ~ Tx | TimePoint)
-contrast(emm2, contrast = TRUE)
-pairs(emm2)
-pairs(emm2, by = "Tx")
-plot(emm2)
+cort02 = emmeans (Cortisol02, ~ Tx | TimePoint)
+contrast(cort02, contrast = TRUE)
+pairs(cort02, by = "Tx")
 
+xcort02a = emmeans (Cortisol02a, ~ Tx | TimePoint)
+contrast(cort02a, contrast = TRUE)
+pairs(cort02a, by = "Tx")
 ## Plot Cortisol
 
 A_col <- "#9933FF"
 B_col <- "#FF6666"
 
-ggplot(Cortisol, aes(x = TimePoint, y = Cortisol, fill = Tx)) +
+ggplot(Cortisol, aes(x = TimePoint, y = log10(Cortisol), fill = Tx)) +
   geom_boxplot(outlier.shape = NA) +
   geom_jitter(aes(shape = Tx), position = position_jitterdodge(), size = 2.5) +
   labs(x = "Days in Experiment", y = "Cortisol (ng/mL)", fill = "Treatment", shape = "Treatment") +
@@ -76,6 +85,6 @@ ggplot(Cortisol, aes(x = TimePoint, y = Cortisol, fill = Tx)) +
         panel.border = element_blank(), axis.line = element_line(),
         axis.text = element_text(size = 12), axis.title.x = element_text(size = 16), 
         axis.title.y = element_text(size = 16)) +  
-  scale_y_continuous(limits = c(0, 100))
+  scale_y_continuous(limits = c(0, 3))
 
 ggsave("Cortisol_cleaned_jitter_boxplot_07042023.png", width = 6, height = 6, dpi = 600)

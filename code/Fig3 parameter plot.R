@@ -20,7 +20,8 @@ fig3<-ggplot(data.slopes,aes(x=Trait, y = Slope, color = Temp))+
                          axis.text.x=element_text(size=16),axis.title.x=element_text(size=18),
                          panel.grid.major = element_blank(), panel.grid.minor = element_blank())+
   scale_fill_manual(values  = c(A_col, B_col))+
-  scale_color_manual(values = c(A_col, B_col))
+  scale_color_manual(values = c(A_col, B_col))+
+  geom_hline(yintercept = 1, linetype = "dashed")
 fig3
 ppi=300
 png("figures/fig3 params.png", width=8*ppi, height=6*ppi, res=ppi)
