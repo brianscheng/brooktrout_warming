@@ -50,6 +50,9 @@ Cortisol02a <-lm(log10(Cortisol) ~ Tx *TimePoint, data = Cortisol)
 summary(Cortisol02)
 summary(Cortisol02a)
 
+Anova(Cortisol02,  type = 3)
+Anova(Cortisol02a, type = 3)
+
 plot(Cortisol02)
 Cortisol$residuals<-residuals(Cortisol02)
 ggplot(Cortisol,aes(x=TimePoint, y= residuals))+geom_boxplot()
@@ -59,14 +62,13 @@ Cortisol$residuals02a<-residuals(Cortisol02a)
 ggplot(Cortisol,aes(x=TimePoint, y= residuals02a))+geom_boxplot()
 ggplot(Cortisol,aes(x=Tx, y= residuals02a))+geom_boxplot()+facet_grid(.~TimePoint)
 
-Anova(Cortisol02,  type = 3)
-Anova(Cortisol02a, type = 3)
+
 
 cort02 = emmeans (Cortisol02, ~ Tx | TimePoint)
 contrast(cort02, contrast = TRUE)
 pairs(cort02, by = "Tx")
 
-xcort02a = emmeans (Cortisol02a, ~ Tx | TimePoint)
+cort02a = emmeans (Cortisol02a, ~ Tx | TimePoint)
 contrast(cort02a, contrast = TRUE)
 pairs(cort02a, by = "Tx")
 ## Plot Cortisol

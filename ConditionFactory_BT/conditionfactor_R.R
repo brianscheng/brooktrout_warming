@@ -72,16 +72,13 @@ ConditionFactor_rel_mean_se<- ConditionFactor_rel_mean_se %>%
 #### K analysis
 str(ConditionFactor_df2)
 K01  <-lmer(ConditionFactor_relative ~ temp * time_step + (1|TAGNUMBER), data = ConditionFactor_df2)
-K02  <-lmer(ConditionFactor_relative ~ temp * time_step + (1|TAGNUMBER) + (1|tank), data = ConditionFactor_df2)
 K01a <-lmer(log10(ConditionFactor_relative) ~ temp * time_step + (1|TAGNUMBER), data = ConditionFactor_df2)
 
 summary(K01)
-summary(K02)
 summary(K01a)
 
 plot(K01)
 plot(K01a)
-plot(K02)
 
 ConditionFactor_df2$residuals<-residuals(K01)
 ggplot(ConditionFactor_df2,aes(x=time_step, y= residuals))+geom_boxplot()

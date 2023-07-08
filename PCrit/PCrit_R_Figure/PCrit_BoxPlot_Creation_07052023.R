@@ -12,19 +12,20 @@ library(tibble)
 library(lme4)
 library(lmerTest)
 library(emmeans)
+library(here)
 
-PCrit_15C_1_initial <- read.csv("15C_1_PCrit_initial_06262023.csv")
-PCrit_15C_2_initial <- read.csv("15C_2_PCrit_initial_06262023.csv")
-PCrit_15C_1_3month <- read.csv("15C_1_PCrit_3month_06262023.csv")
-PCrit_15C_2_3month <- read.csv("15C_2_PCrit_3month_06262023.csv")
-PCrit_15C_1_6month <- read.csv("15C_1_PCrit_6month_06262023.csv")
-PCrit_15C_2_6month <- read.csv("15C_2_PCrit_6month_06262023.csv")
-PCrit_20C_1_initial <- read.csv("20C_1_PCrit_initial_06262023.csv")
-PCrit_20C_2_initial <- read.csv("20C_2_PCrit_initial_06262023.csv")
-PCrit_20C_1_3month <- read.csv("20C_1_PCrit_3month_06262023.csv")
-PCrit_20C_2_3month <- read.csv("20C_2_PCrit_3month_06262023.csv")
-PCrit_20C_1_6month <- read.csv("20C_1_PCrit_6month_06262023.csv")
-PCrit_20C_2_6month <- read.csv("20C_2_PCrit_6month_06262023.csv")
+PCrit_15C_1_initial <- read.csv(here("PCrit/PCrit_OutputFiles/15C_1_PCrit_initial_06262023.csv"))
+PCrit_15C_2_initial <- read.csv(here("PCrit/PCrit_OutputFiles/15C_2_PCrit_initial_06262023.csv"))
+PCrit_15C_1_3month <- read.csv(here("PCrit/PCrit_OutputFiles/15C_1_PCrit_3month_06262023.csv"))
+PCrit_15C_2_3month <- read.csv(here("PCrit/PCrit_OutputFiles/15C_2_PCrit_3month_06262023.csv"))
+PCrit_15C_1_6month <- read.csv(here("PCrit/PCrit_OutputFiles/15C_1_PCrit_6month_06262023.csv"))
+PCrit_15C_2_6month <- read.csv(here("PCrit/PCrit_OutputFiles/15C_2_PCrit_6month_06262023.csv"))
+PCrit_20C_1_initial <- read.csv(here("PCrit/PCrit_OutputFiles/20C_1_PCrit_initial_06262023.csv"))
+PCrit_20C_2_initial <- read.csv(here("PCrit/PCrit_OutputFiles/20C_2_PCrit_initial_06262023.csv"))
+PCrit_20C_1_3month <- read.csv(here("PCrit/PCrit_OutputFiles/20C_1_PCrit_3month_06262023.csv"))
+PCrit_20C_2_3month <- read.csv(here("PCrit/PCrit_OutputFiles/20C_2_PCrit_3month_06262023.csv"))
+PCrit_20C_1_6month <- read.csv(here("PCrit/PCrit_OutputFiles/20C_1_PCrit_6month_06262023.csv"))
+PCrit_20C_2_6month <- read.csv(here("PCrit/PCrit_OutputFiles/20C_2_PCrit_6month_06262023.csv"))
 
 df_list <- list(
   PCrit_15C_1_initial,
@@ -223,26 +224,29 @@ names(Pcrit_compiled)[names(Pcrit_compiled) == "Replicate"] <- "Tank"
 # Analysis of PCrit
 
 str(Pcrit_compiled)
-Pcrit_compiled01  <-lmer(LLO ~ Temp * Time + (1|Tank), data = Pcrit_compiled)
-Pcrit_compiled01a <-lmer(log10(LLO) ~ Temp * Time + (1|Tank), data = Pcrit_compiled)
+#Pcrit_compiled01  <-lmer(LLO ~ Temp * Time + (1|Tank), data = Pcrit_compiled)
+#Pcrit_compiled01a <-lmer(log10(LLO) ~ Temp * Time + (1|Tank), data = Pcrit_compiled)
+p01 <-lm(LLO~Temp*Time, data = Pcrit_compiled)
+p02 <-lm(log10(LLO)~Temp*Time, data = Pcrit_compiled)
 
-summary(Pcrit_compiled01)
-summary(Pcrit_compiled01a)
+summary(p01)
+summary(p02)
 
-plot(Pcrit_compiled01)
-plot(Pcrit_compiled01a)
 
-Pcrit_compiled$residuals<-residuals(Pcrit_compiled01a)
+Pcrit_compiled$residuals<-residuals(p01)
+Pcrit_compiled$residuals_log<-residuals(p02)
 ggplot(Pcrit_compiled,aes(x=Time, y= residuals))+geom_boxplot()
 ggplot(Pcrit_compiled,aes(x=Temp, y= residuals))+geom_boxplot()+facet_grid(.~Time)
+ggplot(Pcrit_compiled,aes(x=Temp, y= residuals_log))+geom_boxplot()+facet_grid(.~Time)
 
-anova(Pcrit_compiled01a, ddf = "Kenward-Roger")
+Anova(p01)
+Anova(p02)
 
-emmPcrit_compiled = emmeans (Pcrit_compiled01a, ~ Temp | Time)
-contrast(emmPcrit_compiled, contrast = TRUE)
-pairs(emmPcrit_compiled)
-pairs(emmPcrit_compiled, by = "Temp")
-plot(emmPcrit_compiled)
+emm_p01 = emmeans (p01, ~ Temp | Time)
+contrast(emm_p01, contrast = TRUE)
+pairs(emm_p01)
+pairs(emm_p01, by = "Temp")
+plot(emm_p01)
 
 
 # Plot with the custom order on the x-axis
