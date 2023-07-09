@@ -54,16 +54,16 @@ names(RMR_MassCorrected)[names(RMR_MassCorrected) == "Replicate"] <- "Tank"
 ## Analysis of RMR
 str(RMR_MassCorrected)
 
-RMR01  <-lmer(Mass_Corrected ~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
+#RMR01  <-lmer(Mass_Corrected ~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
 
-RMR_MassCorrected <- RMR_MassCorrected %>%
-  mutate (TimePoint = factor(TimePoint)) %>%
-  mutate (Treatment = factor(Treatment)) %>%
-  mutate (Tank      = factor(Tank))
+#RMR_MassCorrected <- RMR_MassCorrected %>%
+#  mutate (TimePoint = factor(TimePoint)) %>%
+#  mutate (Treatment = factor(Treatment)) %>%
+#  mutate (Tank      = factor(Tank))
 
-RMR01a <-lmer(Mass_Corrected~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
-anova(RMR01, ddf = "Kenward-Roger")
-anova(RMR01a, ddf = "Kenward-Roger")
+#RMR01a <-lmer(Mass_Corrected~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
+#anova(RMR01, ddf = "Kenward-Roger")
+#anova(RMR01a, ddf = "Kenward-Roger")
 
 #no random effects
 r01 <- lm (Mass_Corrected ~ Treatment * TimePoint, data = RMR_MassCorrected)
@@ -73,8 +73,6 @@ Anova(r01, type = 3)
 RMR_MassCorrected$residuals<-residuals(r01)
 ggplot(RMR_MassCorrected,aes(x=TimePoint, y= residuals))+geom_boxplot()
 ggplot(RMR_MassCorrected,aes(x=Treatment, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
-
-Anova(r01, type = 3)
 
 emmRMR = emmeans (r01, ~ Treatment | TimePoint)
 contrast(emmRMR, contrast = TRUE)

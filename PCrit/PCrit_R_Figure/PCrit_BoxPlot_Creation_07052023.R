@@ -239,8 +239,8 @@ ggplot(Pcrit_compiled,aes(x=Time, y= residuals))+geom_boxplot()
 ggplot(Pcrit_compiled,aes(x=Temp, y= residuals))+geom_boxplot()+facet_grid(.~Time)
 ggplot(Pcrit_compiled,aes(x=Temp, y= residuals_log))+geom_boxplot()+facet_grid(.~Time)
 
-Anova(p01)
-Anova(p02)
+Anova(p01, type = 2)
+Anova(p02, type = 2)
 
 emm_p01 = emmeans (p01, ~ Temp | Time)
 contrast(emm_p01, contrast = TRUE)
