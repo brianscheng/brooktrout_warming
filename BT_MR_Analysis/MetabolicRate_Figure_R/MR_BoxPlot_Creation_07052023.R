@@ -11,6 +11,7 @@ library(car)
 library(lme4)
 library(lmerTest)
 library(emmeans)
+library(here)
 
 RMR_15_Scaling <- 0.872
 RMR_20_Scaling <- 0.830
@@ -22,8 +23,12 @@ B_col <- "#FF6666"
 
 ## Pull in Raw Files from Repository
 
-MMR <- read.csv("BT_MMR_LongForm_Merged_04062023.csv")
-RMR <- read.csv("BT_RMR_LongForm_Merged_06262023.csv")
+MMR <- read.csv(here("BT_MR_Analysis/MetabolicRate_MergedFiles/BT_MMR_LongForm_Merged_04062023.csv"), stringsAsFactors = T)
+RMR <- read.csv(here("BT_MR_Analysis/MetabolicRate_MergedFiles/BT_RMR_LongForm_Merged_06262023.csv"))
+
+#testing to check numeric vs factors
+MMR2 <- read.csv(here("BT_MR_Analysis/MetabolicRate_MergedFiles/BT_MMR_LongForm_Merged_04062023.csv"))
+str(MMR2)
 
 # Mass Correction of RMR  
 
@@ -48,20 +53,30 @@ names(RMR_MassCorrected)[names(RMR_MassCorrected) == "Replicate"] <- "Tank"
 
 ## Analysis of RMR
 str(RMR_MassCorrected)
+
 RMR01  <-lmer(Mass_Corrected ~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
-RMR01a <-lmer(log10(Mass_Corrected) ~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
 
-summary(RMR01)
-summary(RMR01a)
+RMR_MassCorrected <- RMR_MassCorrected %>%
+  mutate (TimePoint = factor(TimePoint)) %>%
+  mutate (Treatment = factor(Treatment)) %>%
+  mutate (Tank      = factor(Tank))
 
-plot(RMR01a)
-RMR_MassCorrected$residuals<-residuals(RMR01a)
+RMR01a <-lmer(Mass_Corrected~ Treatment * TimePoint + (1|Tank), data = RMR_MassCorrected)
+anova(RMR01, ddf = "Kenward-Roger")
+anova(RMR01a, ddf = "Kenward-Roger")
+
+#no random effects
+r01 <- lm (Mass_Corrected ~ Treatment * TimePoint, data = RMR_MassCorrected)
+summary(r01)
+Anova(r01, type = 3)
+
+RMR_MassCorrected$residuals<-residuals(r01)
 ggplot(RMR_MassCorrected,aes(x=TimePoint, y= residuals))+geom_boxplot()
 ggplot(RMR_MassCorrected,aes(x=Treatment, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
 
-anova(RMR01a, ddf = "Kenward-Roger")
+Anova(r01, type = 3)
 
-emmRMR = emmeans (RMR01a, ~ Treatment | TimePoint)
+emmRMR = emmeans (r01, ~ Treatment | TimePoint)
 contrast(emmRMR, contrast = TRUE)
 pairs(emmRMR)
 pairs(emmRMR, by = "Treatment")
@@ -109,26 +124,40 @@ names(MMR_MassCorrected)[names(MMR_MassCorrected) == "Replicate"] <- "Tank"
 
 ## Analysis of MMR
 str(MMR_MassCorrected)
-MMR01  <-lmer(Mass_Corrected ~ Treatment * TimePoint + (1|Tank), data = MMR_MassCorrected)
-MMR01a <-lmer(log10(Mass_Corrected) ~ Treatment * TimePoint + (1|Tank), data = MMR_MassCorrected)
+MMR_MassCorrected <- MMR_MassCorrected %>%
+  mutate (TimePoint = factor(TimePoint)) %>%
+  mutate (Treatment = factor(Treatment)) %>%
+  mutate (Tank      = factor(Tank))
 
-summary(MMR01)
-summary(MMR01a)
+#MMR01  <-lmer(Mass_Corrected ~ Treatment * TimePoint + (1|Tank), data = MMR_MassCorrected)
+#MMR01a <-lmer(log10(Mass_Corrected) ~ Treatment * TimePoint + (1|Tank), data = MMR_MassCorrected)
 
-plot(MMR01)
-plot(MMR01a)
+#summary(MMR01)
+#summary(MMR01a)
 
-MMR_MassCorrected$residuals<-residuals(MMR01a)
+#plot(MMR01)
+#plot(MMR01a)
+
+#MMR_MassCorrected$residuals<-residuals(MMR01a)
+#ggplot(MMR_MassCorrected,aes(x=TimePoint, y= residuals))+geom_boxplot()
+#ggplot(MMR_MassCorrected,aes(x=Treatment, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
+
+#anova(MMR01a, ddf = "Kenward-Roger")
+
+m01 <- lm (Mass_Corrected ~ Treatment * TimePoint, data = MMR_MassCorrected)
+
+MMR_MassCorrected$residuals<-residuals(m01)
 ggplot(MMR_MassCorrected,aes(x=TimePoint, y= residuals))+geom_boxplot()
 ggplot(MMR_MassCorrected,aes(x=Treatment, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
 
-anova(MMR01a, ddf = "Kenward-Roger")
+Anova (m01, type = 2)
 
-emmMMR = emmeans (MMR01a, ~ Treatment | TimePoint)
+emmMMR = emmeans (m01, ~ Treatment | TimePoint)
 contrast(emmMMR, contrast = TRUE)
 pairs(emmMMR)
 pairs(emmMMR, by = "Treatment")
 plot(emmMMR)
+
 
 # Graph Box Plot
 
@@ -163,22 +192,30 @@ rosner.out_FAS <- subset(rosner.out_FAS, Outlier %in% "TRUE")
 # Analysis of FAS
 
 str(FAS)
-FAS01  <-lmer(FAS ~ Treatment * TimePoint + (1|Tank), data = FAS)
-FAS01a <-lmer(log10(FAS) ~ Treatment * TimePoint + (1|Tank), data = FAS)
+#FAS01  <-lmer(FAS ~ Treatment * TimePoint + (1|Tank), data = FAS)
+#FAS01a <-lmer(log10(FAS) ~ Treatment * TimePoint + (1|Tank), data = FAS)
 
-summary(FAS01)
-summary(FAS01a)
+#summary(FAS01)
+#summary(FAS01a)
 
-plot(FAS01)
-plot(FAS01a)
+#plot(FAS01)
+#plot(FAS01a)
 
-FAS$residuals<-residuals(FAS01a)
+#FAS$residuals<-residuals(FAS01a)
+#ggplot(FAS,aes(x=TimePoint, y= residuals))+geom_boxplot()
+#ggplot(FAS,aes(x=Treatment, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
+
+#anova(FAS01a, ddf = "Kenward-Roger")
+
+f01<-lm(FAS ~ Treatment * TimePoint, data = FAS)
+
+FAS$residuals<-residuals(f01)
 ggplot(FAS,aes(x=TimePoint, y= residuals))+geom_boxplot()
 ggplot(FAS,aes(x=Treatment, y= residuals))+geom_boxplot()+facet_grid(.~TimePoint)
 
-anova(FAS01a, ddf = "Kenward-Roger")
+Anova(f01, type = 2)
 
-emmFAS = emmeans (FAS01a, ~ Treatment | TimePoint)
+emmFAS = emmeans (f01, ~ Treatment | TimePoint)
 contrast(emmFAS, contrast = TRUE)
 pairs(emmFAS)
 pairs(emmFAS, by = "Treatment")
